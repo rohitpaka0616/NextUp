@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Base */
+  --color-background: #f9fafb;
+  --color-foreground: #0f172a;
+  --color-muted: #64748b;
+  --color-border: #e2e5ea;
+
+  /* Surfaces */
+  --color-card: #ffffff;
+  --color-card-hover: #f8f9fb;
+
+  /* Accent / Brand – navy indigo from logo */
+  --color-accent: #262b6a;
+  --color-accent-hover: #1c2054;
+  --color-accent-light: #4f46e5;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+
+  /* Badges */
+  --color-badge-open: #262b6a;
+  --color-badge-building: #f59e0b;
+  --color-badge-shipped: #16a34a;
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+
+  /* Shadows */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-weight: 700;
+  }
+
+  h2 {
+    font-weight: 600;
+  }
+
+  h3 {
+    font-weight: 600;
+  }
+}
+
+/* ── Reusable component styles ──────────────────────────── */
+
+@layer components {
+
+  /* Soft depth cards */
+  .card-elevated {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-elevated:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Touchable primary button */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: white;
+    background: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(38, 43, 106, 0.25);
+    transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background: var(--color-accent-hover);
+    box-shadow: 0 4px 14px rgba(38, 43, 106, 0.3);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+
+  /* Touchable secondary button */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-soft);
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(38, 43, 106, 0.4);
+    color: var(--color-foreground);
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.97);
+  }
+
+  /* Logo humanization */
+  .logo-hero {
+    filter: drop-shadow(0 2px 8px rgba(38, 43, 106, 0.2));
+    transform: rotate(-2deg) translateX(-6px);
+    transition: transform 0.3s ease;
+  }
+
+  .logo-hero:hover {
+    transform: rotate(0deg) translateX(0);
+  }
+}
