@@ -23,8 +23,10 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/nextup"
-      NEXTAUTH_SECRET: "change-me-in-production-use-openssl-rand-base64-32"
-      NEXTAUTH_URL: "http://localhost:3000"
+      # NextAuth v5 / Auth.js: use AUTH_* (NEXTAUTH_* still works as alias)
+      AUTH_SECRET: "change-me-in-production-use-openssl-rand-base64-32"
+      AUTH_URL: "http://localhost:3000"
+      ADMIN_EMAIL: "admin@example.com"
     depends_on:
       db:
         condition: service_healthy

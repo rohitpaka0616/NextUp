@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import { pool } from "@/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    // Required for Vercel + custom domains: URLs are derived from request Host / x-forwarded-* headers.
+    trustHost: true,
     session: { strategy: "jwt" },
     pages: {
         signIn: "/login",
