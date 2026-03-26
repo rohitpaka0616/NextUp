@@ -5,6 +5,8 @@ import type { Status } from "@/lib/db";
 import StatusBadge from "@/components/StatusBadge";
 import VoteButton from "@/components/VoteButton";
 import StatusChanger from "@/components/StatusChanger";
+import Link from "next/link";
+import DeleteIdeaButton from "@/components/DeleteIdeaButton";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -40,6 +42,7 @@ export default async function IdeaDetailPage({ params }: Props) {
     };
 
     const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
+    const isOwner = session?.user?.id === idea.userId;
 
     // Check if the current user has voted
     let hasVoted = false;
@@ -73,6 +76,17 @@ export default async function IdeaDetailPage({ params }: Props) {
                         </div>
                     )}
                 </div>
+                {isOwner && (
+                    <div className="flex items-start gap-2">
+                        <Link
+                            href={`/idea/${idea.id}/edit`}
+                            className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-card-hover"
+                        >
+                            Edit
+                        </Link>
+                        <DeleteIdeaButton ideaId={idea.id} />
+                    </div>
+                )}
             </div>
 
             <div className="mb-8 rounded-xl border border-border bg-card p-6">

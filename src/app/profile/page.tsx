@@ -36,6 +36,19 @@ export default async function ProfilePage() {
     );
     const votesCast = voteCountRows[0].count;
 
+    // Fetch ideas this user voted on (newest vote first)
+    const { rows: votedIdeas } = await pool.query(
+        `SELECT i.id, i.title, i."shortDesc", i.status, i."createdAt",
+                u.name AS "authorName",
+                v."createdAt" AS "votedAt"
+         FROM "Vote" v
+         JOIN "Idea" i ON i.id = v."ideaId"
+         JOIN "User" u ON u.id = i."userId"
+         WHERE v."userId" = $1
+         ORDER BY v."createdAt" DESC`,
+        [session.user.id]
+    );
+
     return (
         <div className="mx-auto max-w-3xl">
             <div className="mb-10">
@@ -64,14 +77,14 @@ export default async function ProfilePage() {
                     <p className="mb-4 text-muted">You haven&apos;t submitted any ideas yet.</p>
                     <Link
                         href="/submit"
-                        className="rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
+                        className="mt-2 inline-flex text-sm font-semibold text-foreground transition-colors hover:text-muted"
                     >
                         Submit Your First Idea
                     </Link>
                 </div>
             ) : (
-                <div className="flex flex-col gap-3">
-                    {ideas.map((idea: { id: string; title: string; shortDesc: string; status: Status; voteCount: number }) => (
+                <div className="mb-10 flex flex-col gap-3">
+                    {ideas.map((idea: { id: string; title: string; shortDesc: string; status: Status; voteCount: number; createdAt: Date }) => (
                         <Link
                             key={idea.id}
                             href={`/idea/${idea.id}`}
@@ -79,7 +92,7 @@ export default async function ProfilePage() {
                         >
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <h3 className="truncate font-semibold transition-colors group-hover:text-accent">
+                                    <h3 className="truncate font-semibold transition-colors group-hover:text-foreground">
                                         {idea.title}
                                     </h3>
                                     <StatusBadge status={idea.status} />
@@ -87,9 +100,17 @@ export default async function ProfilePage() {
                                 <p className="mt-1 truncate text-sm text-muted">
                                     {idea.shortDesc}
                                 </p>
+                                <p className="mt-1 text-xs text-muted">
+                                    Submitted{" "}
+                                    {new Date(idea.createdAt).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                    })}
+                                </p>
                             </div>
                             <div className="ml-4 flex flex-col items-center rounded-lg bg-accent/10 px-3 py-1.5">
-                                <span className="text-lg font-bold text-accent">
+                                <span className="text-lg font-bold text-foreground">
                                     {idea.voteCount}
                                 </span>
                                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted">
@@ -98,6 +119,57 @@ export default async function ProfilePage() {
                             </div>
                         </Link>
                     ))}
+                </div>
+            )}
+
+            <h2 className="mb-4 text-xl font-bold">Ideas You Voted On</h2>
+            {votedIdeas.length === 0 ? (
+                <div className="rounded-xl border border-border bg-card py-10 text-center">
+                    <p className="text-muted">
+                        You have not voted on any ideas yet.
+                    </p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-3">
+                    {votedIdeas.map(
+                        (idea: {
+                            id: string;
+                            title: string;
+                            shortDesc: string;
+                            status: Status;
+                            authorName: string;
+                            votedAt: Date;
+                        }) => (
+                            <Link
+                                key={`${idea.id}-${idea.votedAt}`}
+                                href={`/idea/${idea.id}`}
+                                className="group rounded-xl border border-border bg-card p-4 transition-all hover:border-accent/40 hover:bg-card-hover"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="truncate font-semibold transition-colors group-hover:text-foreground">
+                                                {idea.title}
+                                            </h3>
+                                            <StatusBadge status={idea.status} />
+                                        </div>
+                                        <p className="mt-1 truncate text-sm text-muted">
+                                            {idea.shortDesc}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted">
+                                            by {idea.authorName} · voted{" "}
+                                            {new Date(idea.votedAt).toLocaleDateString("en-US", {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                            })}
+                                        </p>
+                                    </div>
+                                    <span className="text-xs font-medium text-muted">Voted</span>
+                                </div>
+                            </Link>
+                        )
+                    )}
                 </div>
             )}
         </div>

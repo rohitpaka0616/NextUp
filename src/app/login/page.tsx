@@ -88,7 +88,7 @@ export default function LoginPage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="mt-2 cursor-pointer rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+                    className="mt-2 cursor-pointer rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
                 >
                     {loading ? "Signing in…" : "Sign In"}
                 </button>
@@ -96,7 +96,7 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-sm text-muted">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="text-accent hover:underline">
+                <Link href="/register" className="text-foreground hover:underline">
                     Create one
                 </Link>
             </p>

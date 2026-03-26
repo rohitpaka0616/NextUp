@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${plusJakarta.variable} flex min-h-screen flex-col antialiased`}>
         <AuthProvider>
           <Navbar />
-          <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:py-12">{children}</main>
           <Footer />
         </AuthProvider>
       </body>

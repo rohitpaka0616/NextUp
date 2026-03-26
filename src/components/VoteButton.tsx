@@ -52,7 +52,7 @@ export default function VoteButton({
             onClick={handleVote}
             disabled={isPending}
             className={`flex cursor-pointer items-center gap-3 rounded-xl border px-6 py-3 text-sm font-semibold transition-all duration-200 ${voted
-                    ? "border-accent bg-accent/15 text-accent"
+                    ? "border-accent bg-accent/15 text-foreground"
                     : "border-border bg-card text-muted hover:border-accent/40 hover:text-foreground"
                 } disabled:opacity-50`}
         >

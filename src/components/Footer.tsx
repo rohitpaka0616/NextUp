@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { auth } from "@/lib/auth";
 import logo from "@/app/logos/nu_logo_name.png";
 
@@ -7,13 +6,22 @@ export default async function Footer() {
     const session = await auth();
 
     return (
-        <footer className="mt-auto border-t border-border bg-card">
-            <div className="mx-auto max-w-5xl px-6 py-10">
+        <footer className="mt-auto border-t border-border bg-card/85 backdrop-blur-sm">
+            <div className="mx-auto max-w-6xl px-6 py-10">
                 <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-between">
                     {/* Brand */}
                     <div className="flex flex-col items-center gap-3 sm:items-start">
                         <Link href="/">
-                            <Image src={logo} alt="NextUp" height={28} className="w-auto" />
+                            <div
+                                aria-label="NextUp"
+                                className="logo-mask"
+                                style={{
+                                    WebkitMaskImage: `url(${logo.src})`,
+                                    maskImage: `url(${logo.src})`,
+                                    width: "65px",
+                                    height: "28px",
+                                }}
+                            />
                         </Link>
                         <p className="text-sm text-muted">
                             Vote for what gets built next.
