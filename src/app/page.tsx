@@ -7,6 +7,7 @@ import logo from "./logos/nu_logo.png";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+
   const { rows: ideas } = await pool.query(`
     SELECT i.id, i.title, i."shortDesc", i.status, i."createdAt",
            u.name AS "authorName",
