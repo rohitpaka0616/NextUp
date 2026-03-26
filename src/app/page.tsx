@@ -8,6 +8,7 @@ import SubmitIdeaForm from "@/components/SubmitIdeaForm";
 import AnalyticsOverview from "@/components/AnalyticsOverview";
 import type { Status } from "@/lib/db";
 import { pickMostTrendingIdea } from "@/lib/trending";
+import logo from "@/app/logos/nu_logo_name.png";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,72 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Intro hero */}
+      <section className="mb-10">
+        <div className="hero-intro">
+          <div className="relative z-10 grid gap-8 md:grid-cols-12 md:items-center">
+            <div className="md:col-span-7 text-center md:text-left">
+              <div className="mb-4 flex justify-center md:justify-start">
+                <div
+                  aria-label="NextUp"
+                  className="logo-mask"
+                  style={{
+                    WebkitMaskImage: `url(${logo.src})`,
+                    maskImage: `url(${logo.src})`,
+                    width: "132px",
+                    height: "56px",
+                  }}
+                />
+              </div>
+
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">NextUp</p>
+              <h1 className="text-3xl font-bold leading-tight md:text-4xl">Vote for What Gets Built</h1>
+              <p className="mt-2 text-sm text-muted md:text-base">
+                Pitch software ideas, vote on the best ones, and the community decides what we build next.
+              </p>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-2 md:justify-start">
+              {!session?.user?.id ? (
+                <>
+                  <Link href="/login" className="btn-primary !px-4 !py-2.5 text-sm">
+                    Sign in to submit
+                  </Link>
+                  <Link href="#ideas" className="btn-secondary !px-4 !py-2.5 text-sm">
+                    Browse ideas
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="#submit" className="btn-primary !px-4 !py-2.5 text-sm">
+                    Submit an idea
+                  </Link>
+                  <Link href="#ideas" className="btn-secondary !px-4 !py-2.5 text-sm">
+                    Browse ideas
+                  </Link>
+                </>
+              )}
+              </div>
+            </div>
+
+            <div className="hidden md:block md:col-span-5">
+              <div aria-hidden="true" className="hero-preview">
+                <div className="hero-preview-topbar" />
+                <div className="hero-preview-title" />
+                <div className="hero-preview-buttons">
+                  <div />
+                  <div />
+                </div>
+                <div className="hero-preview-grid">
+                  <div />
+                  <div />
+                  <div />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <AnalyticsOverview
         topVoteCount={topVoteCount}
         conversionPct={conversionPct}
