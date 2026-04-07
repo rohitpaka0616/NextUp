@@ -8,6 +8,12 @@ import { genId, pool } from "@/lib/db";
 import { normalizeEmail } from "@/lib/validation";
 import { generateUniqueUsername } from "@/lib/usernames";
 
+type AppRole = "admin" | "member";
+
+function normalizeRole(value: unknown): AppRole {
+    return value === "admin" ? "admin" : "member";
+}
+
 async function ensureUserProfile(email: string, fallbackName?: string | null, avatar?: string | null) {
     const emailNorm = normalizeEmail(email);
     const existing = await pool.query(
@@ -19,7 +25,7 @@ async function ensureUserProfile(email: string, fallbackName?: string | null, av
         const name = (fallbackName?.trim() || "New User").slice(0, 80);
         const username = await generateUniqueUsername(name);
         const { rows: countRows } = await pool.query(`SELECT COUNT(*)::int AS count FROM "User"`);
-        const role = (countRows[0]?.count ?? 0) === 0 ? "admin" : "member";
+        const role: AppRole = (countRows[0]?.count ?? 0) === 0 ? "admin" : "member";
         const id = genId();
 
         await pool.query(
@@ -38,7 +44,7 @@ async function ensureUserProfile(email: string, fallbackName?: string | null, av
     if (!nextUsername) {
         nextUsername = await generateUniqueUsername(nextName);
     }
-    const nextRole = (row.role as string | null) ?? "member";
+    const nextRole: AppRole = normalizeRole(row.role);
 
     await pool.query(
         `UPDATE "User"
@@ -115,7 +121,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     email: user.email,
                     username: user.username,
                     image: user.avatar,
-                    role: user.role,
+                    role: normalizeRole(user.role),
                 };
             },
         }),
