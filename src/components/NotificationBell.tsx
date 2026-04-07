@@ -42,8 +42,22 @@ export default function NotificationBell() {
           if (!open) void load();
         }}
         className="relative rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white/80 transition-colors duration-200 hover:bg-white/10"
+        aria-label="Notifications"
       >
-        🔔
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          className="h-4.5 w-4.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          aria-hidden
+        >
+          <path
+            d="M14.5 18a2.5 2.5 0 0 1-5 0m8.5-2H6a1 1 0 0 1-.8-1.6c1.2-1.6 1.8-3.5 1.8-5.5v-.7a5 5 0 1 1 10 0v.7c0 2 .6 3.9 1.8 5.5A1 1 0 0 1 18 16Z"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
         {unread > 0 && (
           <span className="absolute -right-1.5 -top-1.5 rounded-full bg-accent px-1.5 text-[10px] font-bold text-white">
             {unread}
