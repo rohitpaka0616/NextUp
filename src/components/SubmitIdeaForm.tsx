@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { AI_PROMPT_MAX } from "@/lib/limits";
 
 interface SubmitIdeaFormProps {
     compact?: boolean;
@@ -18,8 +19,10 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
         category: "Feature",
         externalLink: "",
     });
+    const [ideaPrompt, setIdeaPrompt] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [generating, setGenerating] = useState(false);
 
     if (status === "loading") {
         return <div className="py-10 text-center text-muted">Loading…</div>;
@@ -72,6 +75,35 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
         }
     }
 
+    async function handleGenerateWithAi() {
+        setError("");
+        setGenerating(true);
+        try {
+            const promptToUse =
+                ideaPrompt.trim() ||
+                "Generate a high-impact software startup idea for developers and small teams.";
+            const res = await fetch("/api/ideas/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt: promptToUse }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setError(data.error || "Failed to generate idea with AI");
+                return;
+            }
+            setForm((prev) => ({
+                ...prev,
+                title: data.title ?? prev.title,
+                description: data.longDesc ?? prev.description,
+            }));
+        } catch {
+            setError("Failed to generate idea. Please try again.");
+        } finally {
+            setGenerating(false);
+        }
+    }
+
     return (
         <form onSubmit={handleSubmit} className="card-elevated flex flex-col gap-6 p-6">
             {error && (
@@ -79,6 +111,34 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
                     {error}
                 </div>
             )}
+
+            <div className="rounded-xl border border-border bg-card-hover p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                    <label htmlFor="ideaPrompt" className="text-sm font-medium">
+                        Need help? Generate with AI
+                    </label>
+                    <button
+                        type="button"
+                        onClick={handleGenerateWithAi}
+                        disabled={generating}
+                        className="btn-secondary !px-3 !py-2 text-xs disabled:opacity-50"
+                    >
+                        {generating ? "Generating..." : "Generate"}
+                    </button>
+                </div>
+                <textarea
+                    id="ideaPrompt"
+                    rows={2}
+                    value={ideaPrompt}
+                    maxLength={AI_PROMPT_MAX}
+                    onChange={(e) => setIdeaPrompt(e.target.value)}
+                    placeholder="Describe what you want: target users, problem, domain, constraints..."
+                    className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm leading-relaxed placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20"
+                />
+                <p className="mt-2 text-xs text-muted">
+                    AI fills title and description. ({ideaPrompt.length}/{AI_PROMPT_MAX} characters)
+                </p>
+            </div>
 
             <div>
                 <label htmlFor="title" className="mb-1.5 block text-sm font-medium">

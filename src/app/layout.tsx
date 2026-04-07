@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   title: "NextUp — Vote for What Gets Built",
   description:
     "Pitch software ideas, vote on the best ones, and the community decides what gets built next.",
+  icons: {
+    icon: [{ url: "/icon.svg?v=2", type: "image/svg+xml" }],
+    shortcut: ["/icon.svg?v=2"],
+    apple: ["/icon.svg?v=2"],
+  },
 };
 
 export default function RootLayout({
