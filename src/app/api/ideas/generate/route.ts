@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import {
+    AI_LONG_DESC_MAX,
+    AI_MAX_COMPLETION_TOKENS,
+    AI_PROMPT_MAX,
+    AI_PROMPT_MIN,
+} from "@/lib/limits";
 
 interface GeneratedIdea {
     title: string;
@@ -37,9 +43,23 @@ export async function POST(req: Request) {
         }
 
         const { prompt } = await req.json();
-        if (!prompt || typeof prompt !== "string" || prompt.trim().length < 8) {
+        if (!prompt || typeof prompt !== "string") {
             return NextResponse.json(
-                { error: "Please provide a more specific idea prompt." },
+                { error: "Please provide an idea prompt." },
+                { status: 400 }
+            );
+        }
+
+        const trimmed = prompt.trim();
+        if (trimmed.length < AI_PROMPT_MIN) {
+            return NextResponse.json(
+                { error: `Prompt must be at least ${AI_PROMPT_MIN} characters.` },
+                { status: 400 }
+            );
+        }
+        if (trimmed.length > AI_PROMPT_MAX) {
+            return NextResponse.json(
+                { error: `Prompt must be at most ${AI_PROMPT_MAX.toLocaleString()} characters.` },
                 { status: 400 }
             );
         }
@@ -73,7 +93,7 @@ export async function POST(req: Request) {
                     },
                     {
                         role: "user",
-                        content: `Prompt: ${prompt}
+                        content: `Prompt: ${trimmed}
 
 Requirements:
 - title: max 120 chars, concrete and catchy
@@ -83,6 +103,7 @@ Requirements:
 - output strict JSON only`,
                     },
                 ],
+                max_tokens: AI_MAX_COMPLETION_TOKENS,
                 response_format: { type: "json_object" },
             }),
         });
@@ -113,10 +134,11 @@ Requirements:
             );
         }
 
+        const longDesc = parsed.longDesc.trim().slice(0, AI_LONG_DESC_MAX);
         return NextResponse.json({
             title: parsed.title.trim().slice(0, 120),
             shortDesc: parsed.shortDesc.trim().slice(0, 280),
-            longDesc: parsed.longDesc.trim(),
+            longDesc,
         });
     } catch (error) {
         return NextResponse.json(

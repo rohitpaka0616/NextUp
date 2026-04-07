@@ -32,7 +32,7 @@ export default function VoteButton({
                 setCount((c) => (voted ? c + 1 : c - 1));
 
                 if (res.status === 401) {
-                    router.push("/login");
+                    router.push("/auth/signin");
                 }
                 return;
             }

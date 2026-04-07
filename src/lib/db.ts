@@ -1,5 +1,9 @@
 import { Pool } from "pg";
 
+/**
+ * All SQL must use parameterized placeholders ($1, $2, …). Never concatenate
+ * untrusted input into query strings — that is what prevents SQL injection.
+ */
 const globalForPg = globalThis as unknown as { pool: Pool | undefined };
 
 export const pool =
@@ -16,7 +20,11 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    passwordHash: string;
+    username: string;
+    avatar: string | null;
+    bio: string;
+    role: "admin" | "member";
+    passwordHash: string | null;
     createdAt: Date;
 }
 

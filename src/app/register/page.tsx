@@ -4,6 +4,11 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+    isValidDisplayName,
+    isValidEmail,
+    normalizeEmail,
+} from "@/lib/validation";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -14,13 +19,25 @@ export default function RegisterPage() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError("");
+        if (!isValidDisplayName(form.name)) {
+            setError("Enter a display name (2–80 characters, including at least one letter).");
+            return;
+        }
+        if (!isValidEmail(form.email)) {
+            setError("Please enter a valid email address.");
+            return;
+        }
         setLoading(true);
 
         try {
             const res = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
+                body: JSON.stringify({
+                    name: form.name.trim(),
+                    email: normalizeEmail(form.email),
+                    password: form.password,
+                }),
             });
 
             if (!res.ok) {
@@ -31,7 +48,7 @@ export default function RegisterPage() {
 
             // Auto sign-in after registration
             const signInRes = await signIn("credentials", {
-                email: form.email,
+                email: normalizeEmail(form.email),
                 password: form.password,
                 redirect: false,
             });
@@ -73,6 +90,7 @@ export default function RegisterPage() {
                         id="name"
                         type="text"
                         required
+                        maxLength={80}
                         autoComplete="name"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}

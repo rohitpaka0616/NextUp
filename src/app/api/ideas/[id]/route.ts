@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { trimIdeaFields, validateIdeaContent } from "@/lib/validation";
 
 // GET /api/ideas/[id] — single idea detail
 export async function GET(
@@ -96,13 +97,18 @@ export async function PUT(
         }
 
         const { id } = await params;
-        const { title, shortDesc, longDesc } = await req.json();
-
-        if (!title || !shortDesc || !longDesc) {
+        const body = await req.json();
+        const fields = trimIdeaFields(body);
+        if (!fields) {
             return NextResponse.json(
-                { error: "Title, short description, and long description are required" },
+                { error: "Invalid JSON: title, shortDesc, and longDesc must be strings" },
                 { status: 400 }
             );
+        }
+
+        const invalid = validateIdeaContent(fields);
+        if (invalid) {
+            return NextResponse.json({ error: invalid }, { status: 400 });
         }
 
         const { rows: ideaRows } = await pool.query(
@@ -126,7 +132,7 @@ export async function PUT(
              SET title = $1, "shortDesc" = $2, "longDesc" = $3
              WHERE id = $4
              RETURNING *`,
-            [title, shortDesc, longDesc, id]
+            [fields.title, fields.shortDesc, fields.longDesc, id]
         );
 
         return NextResponse.json(rows[0]);

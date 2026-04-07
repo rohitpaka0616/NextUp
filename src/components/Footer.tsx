@@ -32,8 +32,9 @@ export default async function Footer() {
                     <div className="flex gap-10 text-sm">
                         <div className="flex flex-col gap-2">
                             <span className="font-semibold text-foreground">Product</span>
-                            <Link href="/#ideas" className="text-muted transition-colors hover:text-foreground">Browse Ideas</Link>
+                            <Link href="/#spotlight" className="text-muted transition-colors hover:text-foreground">Spotlight</Link>
                             <Link href="/submit" className="text-muted transition-colors hover:text-foreground">Submit Idea</Link>
+                            <Link href="/community" className="text-muted transition-colors hover:text-foreground">Community</Link>
                         </div>
                         <div className="flex flex-col gap-2">
                             <span className="font-semibold text-foreground">Account</span>

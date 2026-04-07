@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import type { Status } from "@/lib/db";
+import { getIdeaInterestSnapshot } from "@/lib/idea-interest";
 import StatusBadge from "@/components/StatusBadge";
 import VoteButton from "@/components/VoteButton";
 import StatusChanger from "@/components/StatusChanger";
+import IdeaInterestPanel from "@/components/IdeaInterestPanel";
 import Link from "next/link";
 import DeleteIdeaButton from "@/components/DeleteIdeaButton";
 
@@ -54,6 +56,8 @@ export default async function IdeaDetailPage({ params }: Props) {
         hasVoted = voteRows.length > 0;
     }
 
+    const interest = await getIdeaInterestSnapshot(id, session?.user?.id);
+
     return (
         <div className="mx-auto max-w-3xl">
             <div className="mb-6 flex items-start justify-between gap-4">
@@ -98,11 +102,24 @@ export default async function IdeaDetailPage({ params }: Props) {
                 </div>
             </div>
 
-            <VoteButton
-                ideaId={idea.id}
-                initialVoted={hasVoted}
-                initialCount={idea.voteCount}
-            />
+            <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+                <div className="flex flex-col gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">Support this idea</p>
+                    <VoteButton
+                        ideaId={idea.id}
+                        initialVoted={hasVoted}
+                        initialCount={idea.voteCount}
+                    />
+                </div>
+                <IdeaInterestPanel
+                    ideaId={idea.id}
+                    isLoggedIn={Boolean(session?.user?.id)}
+                    initialCount={interest.count}
+                    initialSampleNames={interest.sampleNames}
+                    initialInterested={interest.viewerInterested}
+                    setupRequired={interest.setupRequired}
+                />
+            </div>
         </div>
     );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { IDEA_LONG_MAX } from "@/lib/limits";
 
 interface EditIdeaFormProps {
     ideaId: string;
@@ -98,10 +99,14 @@ export default function EditIdeaForm({
                     id="longDesc"
                     required
                     rows={8}
+                    maxLength={IDEA_LONG_MAX}
                     value={form.longDesc}
                     onChange={(e) => setForm({ ...form, longDesc: e.target.value })}
                     className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm leading-relaxed placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20"
                 />
+                <p className="mt-1 text-xs text-muted">
+                    {form.longDesc.length.toLocaleString()} / {IDEA_LONG_MAX.toLocaleString()} characters
+                </p>
             </div>
 
             <div className="flex items-center gap-3">

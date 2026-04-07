@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { pool } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import IdeaCard from "@/components/IdeaCard";
 import StatusBadge from "@/components/StatusBadge";
 import DeleteIdeaButton from "@/components/DeleteIdeaButton";
 import SubmitIdeaForm from "@/components/SubmitIdeaForm";
-import AnalyticsOverview from "@/components/AnalyticsOverview";
+import IdeasBoardClient from "@/components/IdeasBoardClient";
+import ScrollTypewriter from "@/components/landing/ScrollTypewriter";
+import NeuralOrbCanvas from "@/components/landing/NeuralOrbCanvas";
 import type { Status } from "@/lib/db";
-import { pickMostTrendingIdea } from "@/lib/trending";
 import logo from "@/app/logos/nu_logo_name.png";
 
 export const dynamic = "force-dynamic";
@@ -15,34 +15,26 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const session = await auth();
 
-  const { rows: ideas } = await pool.query(`
-    SELECT i.id, i.title, i."shortDesc", i.status, i."createdAt",
-           u.name AS "authorName",
-           COUNT(v.id)::int AS "voteCount"
-    FROM "Idea" i
-    JOIN "User" u ON u.id = i."userId"
-    LEFT JOIN "Vote" v ON v."ideaId" = i.id
-    GROUP BY i.id, u.name
-    ORDER BY "voteCount" DESC, i."createdAt" DESC
-  `);
-
-  const topThreeVotes = ideas
-    .slice(0, 3)
-    .reduce((sum: number, idea: Record<string, unknown>) => sum + (idea.voteCount as number), 0);
-  const topVoteCount = (ideas[0]?.voteCount as number | undefined) ?? 0;
-  const totalVotes = ideas.reduce(
-    (sum: number, idea: Record<string, unknown>) => sum + ((idea.voteCount as number) || 0),
-    0
-  );
-  const conversionPct = totalVotes > 0 ? Math.min(247, Math.round((topVoteCount / totalVotes) * 1000)) : 0;
-  const trendingPick = pickMostTrendingIdea(
-    ideas.map((idea: Record<string, unknown>) => ({
-      id: idea.id as string,
-      title: idea.title as string,
-      shortDesc: idea.shortDesc as string,
-      voteCount: (idea.voteCount as number) || 0,
-      createdAt: idea.createdAt as Date,
-    }))
+  const { rows: ideas } = await pool.query(
+    `SELECT i.id,
+            i.title,
+            COALESCE(i.description, i."longDesc") AS description,
+            COALESCE(i.category, 'Other') AS category,
+            i."externalLink",
+            i."createdAt",
+            u.name AS "authorName",
+            COALESCE(u.username, '') AS "authorUsername",
+            u.avatar AS "authorAvatar",
+            COUNT(DISTINCT c.id)::int AS "commentCount",
+            COUNT(v.id)::int AS "voteCount",
+            BOOL_OR(v."userId" = $1) AS "votedByMe"
+      FROM "Idea" i
+      JOIN "User" u ON u.id = i."userId"
+      LEFT JOIN "Vote" v ON v."ideaId" = i.id
+      LEFT JOIN "Comment" c ON c."ideaId" = i.id
+      GROUP BY i.id, u.name, u.username, u.avatar
+      ORDER BY "voteCount" DESC, i."createdAt" DESC`,
+    [session?.user?.id ?? ""]
   );
 
   let dashboardIdeas: Array<{
@@ -58,7 +50,7 @@ export default async function HomePage() {
 
   if (session?.user?.id) {
     const { rows } = await pool.query(
-      `SELECT i.id, i.title, i."shortDesc", i.status, i."createdAt",
+      `SELECT i.id, i.title, COALESCE(i.description, i."shortDesc") AS "shortDesc", i.status, i."createdAt",
               COUNT(v.id)::int AS "voteCount"
        FROM "Idea" i
        LEFT JOIN "Vote" v ON v."ideaId" = i.id
@@ -80,11 +72,12 @@ export default async function HomePage() {
   return (
     <>
       {/* Intro hero */}
-      <section className="mb-10">
-        <div className="hero-intro">
-          <div className="relative z-10 grid gap-8 md:grid-cols-12 md:items-center">
-            <div className="md:col-span-7 text-center md:text-left">
-              <div className="mb-4 flex justify-center md:justify-start">
+      <section id="hero" className="relative left-1/2 mb-10 w-screen max-w-[100vw] -translate-x-1/2 scroll-mt-28">
+        <div className="hero-intro overflow-hidden">
+          <NeuralOrbCanvas />
+          <div className="relative z-10 mx-auto w-full max-w-6xl">
+            <div className="text-center md:text-left">
+              <div className="mb-6 flex justify-center md:justify-start">
                 <div
                   aria-label="NextUp"
                   className="logo-mask"
@@ -98,70 +91,70 @@ export default async function HomePage() {
               </div>
 
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">NextUp</p>
-              <h1 className="text-3xl font-bold leading-tight md:text-4xl">Vote for What Gets Built</h1>
-              <p className="mt-2 text-sm text-muted md:text-base">
-                Pitch software ideas, vote on the best ones, and the community decides what we build next.
+              <h1 className="hero-heading-shimmer text-[2rem] font-bold leading-tight md:text-[3.5rem]">Vote for What Gets Built</h1>
+              <p className="hero-subtitle mx-auto mt-4 min-h-[4.2rem] text-sm text-muted md:mx-0 md:min-h-[3.1rem] md:text-base">
+                <ScrollTypewriter
+                  className="text-muted"
+                  phrases={[
+                    "Pitch software ideas, vote on the best ones, and the community decides what we build next.",
+                    "Transparent prioritization — see momentum before we write a line of code.",
+                    "Submit in seconds. Rally votes. Ship what actually matters.",
+                  ]}
+                />
               </p>
 
               <div className="mt-6 flex flex-wrap justify-center gap-2 md:justify-start">
               {!session?.user?.id ? (
                 <>
-                  <Link href="/login" className="btn-primary !px-4 !py-2.5 text-sm">
+                  <Link href="/auth/signin" className="btn-primary magnetic-btn !px-7 !py-3.5 text-base">
                     Sign in to submit
                   </Link>
-                  <Link href="#ideas" className="btn-secondary !px-4 !py-2.5 text-sm">
-                    Browse ideas
+                  <Link href="#spotlight" className="btn-secondary magnetic-btn !px-7 !py-3.5 text-base">
+                    Browse spotlight
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link href="#submit" className="btn-primary !px-4 !py-2.5 text-sm">
+                  <Link href="/submit" className="btn-primary magnetic-btn !px-7 !py-3.5 text-base">
                     Submit an idea
                   </Link>
-                  <Link href="#ideas" className="btn-secondary !px-4 !py-2.5 text-sm">
-                    Browse ideas
+                  <Link href="#spotlight" className="btn-secondary magnetic-btn !px-7 !py-3.5 text-base">
+                    Browse spotlight
                   </Link>
                 </>
               )}
               </div>
-            </div>
 
-            <div className="hidden md:block md:col-span-5">
-              <div aria-hidden="true" className="hero-preview">
-                <div className="hero-preview-topbar" />
-                <div className="hero-preview-title" />
-                <div className="hero-preview-buttons">
-                  <div />
-                  <div />
-                </div>
-                <div className="hero-preview-grid">
-                  <div />
-                  <div />
-                  <div />
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <AnalyticsOverview
-        topVoteCount={topVoteCount}
-        conversionPct={conversionPct}
-        ideasCount={ideas.length}
-        topThreeVotes={topThreeVotes}
-        totalVotes={totalVotes}
-        yourIdeas={dashboardIdeas.length}
-        trendingPick={trendingPick}
+      <IdeasBoardClient
+        initialIdeas={ideas.map((idea: Record<string, unknown>) => ({
+          id: idea.id as string,
+          title: idea.title as string,
+          description: idea.description as string,
+          category: idea.category as string,
+          externalLink: (idea.externalLink as string | null) ?? null,
+          createdAt: new Date(idea.createdAt as string | Date).toISOString(),
+          voteCount: Number(idea.voteCount) || 0,
+          authorName: idea.authorName as string,
+          authorUsername: idea.authorUsername as string,
+          authorAvatar: (idea.authorAvatar as string | null) ?? null,
+          votedByMe: Boolean(idea.votedByMe),
+          commentCount: Number(idea.commentCount) || 0,
+        }))}
+        loggedIn={Boolean(session?.user?.id)}
       />
 
       {/* Main two-column workspace */}
-      <section className="mb-12 grid gap-6 lg:grid-cols-12">
-        <div id="dashboard" className="scroll-mt-24 lg:col-span-7">
+      <section id="workspace" className="scroll-mt-28 mb-12 grid gap-6 lg:grid-cols-12">
+        <div id="dashboard" className="scroll-mt-28 lg:col-span-7">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight">Dashboard</h2>
             {!session?.user?.id && (
-              <Link href="/login" className="btn-secondary !py-2 !px-4 text-sm">
+              <Link href="/auth/signin" className="btn-secondary !py-2 !px-4 text-sm">
                 Sign in
               </Link>
             )}
@@ -170,7 +163,7 @@ export default async function HomePage() {
           {!session?.user?.id ? (
             <div className="card-elevated py-10 text-center">
               <p className="mb-4 text-muted">Sign in to view and manage your submissions.</p>
-              <Link href="/login" className="btn-primary">Sign In</Link>
+              <Link href="/auth/signin" className="btn-primary">Sign In</Link>
             </div>
           ) : (
             <>
@@ -241,46 +234,10 @@ export default async function HomePage() {
           )}
         </div>
 
-        <div id="submit" className="scroll-mt-24 lg:col-span-5">
+        <div id="submit" className="scroll-mt-28 lg:col-span-5">
           <h2 className="mb-4 text-xl font-bold tracking-tight">Submit an Idea</h2>
           <SubmitIdeaForm compact />
         </div>
-      </section>
-
-      {/* Ideas list */}
-      <section id="ideas" className="scroll-mt-24">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Top Ideas{" "}
-            <span className="text-sm font-normal text-muted">
-              ({ideas.length})
-            </span>
-          </h2>
-        </div>
-
-        {ideas.length === 0 ? (
-          <div className="card-elevated py-16 text-center">
-            <p className="text-lg text-muted">No ideas yet. Be the first!</p>
-            <Link href="/submit" className="btn-primary mt-4 inline-flex">
-              Submit an Idea
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {ideas.map((idea: Record<string, unknown>, i: number) => (
-              <IdeaCard
-                key={idea.id as string}
-                id={idea.id as string}
-                title={idea.title as string}
-                shortDesc={idea.shortDesc as string}
-                status={idea.status as "OPEN" | "BUILDING" | "SHIPPED"}
-                authorName={idea.authorName as string}
-                voteCount={idea.voteCount as number}
-                rank={i + 1}
-              />
-            ))}
-          </div>
-        )}
       </section>
 
     </>
