@@ -18,7 +18,12 @@ function messageFor(n: NotificationItem) {
   return "New notification";
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+    /** Wider, left-aligned panel for use inside the mobile drawer */
+    widePanel?: boolean;
+}
+
+export default function NotificationBell({ widePanel = false }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const unread = items.filter((i) => !i.read).length;
@@ -65,7 +70,11 @@ export default function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-white/10 bg-[#0e1020] p-2 shadow-[0_16px_34px_rgba(0,0,0,0.35)]">
+        <div
+          className={`absolute z-50 mt-2 rounded-xl border border-white/10 bg-[#0e1020] p-2 shadow-[0_16px_34px_rgba(0,0,0,0.35)] ${
+            widePanel ? "left-0 right-0 w-full max-w-none" : "right-0 w-80"
+          }`}
+        >
           <div className="mb-2 flex items-center justify-between px-2">
             <p className="text-sm font-semibold text-white">Notifications</p>
             <button className="text-xs text-muted hover:text-white" onClick={markAllRead}>

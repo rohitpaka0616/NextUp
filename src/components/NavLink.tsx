@@ -9,6 +9,7 @@ interface NavLinkProps {
     match?: "exact" | "prefix";
     variant?: "primary" | "muted";
     className?: string;
+    onClick?: () => void;
 }
 
 export default function NavLink({
@@ -17,6 +18,7 @@ export default function NavLink({
     match = "exact",
     variant = "muted",
     className = "",
+    onClick,
 }: NavLinkProps) {
     const pathname = usePathname();
     const hrefPath = href.split("#")[0] || "/";
@@ -29,7 +31,12 @@ export default function NavLink({
         const base = "btn-primary magnetic-btn !py-2 !px-4 text-sm";
         const active = isActive ? " ring-2 ring-accent/35 shadow-[0_8px_18px_rgba(222,224,254,0.28)]" : "";
         return (
-            <Link href={href} aria-current={isActive ? "page" : undefined} className={`${base}${active} ${className}`}>
+            <Link
+                href={href}
+                aria-current={isActive ? "page" : undefined}
+                className={`${base}${active} ${className}`}
+                onClick={onClick}
+            >
                 {children}
             </Link>
         );
@@ -44,6 +51,7 @@ export default function NavLink({
             href={href}
             aria-current={isActive ? "page" : undefined}
             className={`${base} ${isActive ? active : inactive} ${className}`}
+            onClick={onClick}
         >
             {children}
         </Link>

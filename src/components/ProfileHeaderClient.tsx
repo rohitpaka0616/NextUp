@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BIO_MAX_CHARS } from "@/lib/profileLimits";
 
 export default function ProfileHeaderClient({
   isOwner,
@@ -96,11 +97,14 @@ export default function ProfileHeaderClient({
           <label className="mb-1 block text-xs text-muted">Bio</label>
           <textarea
             value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            maxLength={160}
+            onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX_CHARS))}
+            maxLength={BIO_MAX_CHARS}
             rows={3}
             className="mb-3 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
           />
+          <p className="-mt-2 mb-3 text-xs text-white/40">
+            {bio.length} / {BIO_MAX_CHARS} characters
+          </p>
           <label className="mb-1 block text-xs text-muted">Avatar upload</label>
           <input
             type="file"

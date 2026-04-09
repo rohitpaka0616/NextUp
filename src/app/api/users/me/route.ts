@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { BIO_MAX_CHARS } from "@/lib/profileLimits";
 
 export async function PATCH(req: Request) {
   try {
@@ -17,8 +18,11 @@ export async function PATCH(req: Request) {
     if (!name || name.length < 2 || name.length > 80) {
       return NextResponse.json({ error: "Name must be 2-80 characters." }, { status: 400 });
     }
-    if (bio.length > 160) {
-      return NextResponse.json({ error: "Bio must be 160 characters max." }, { status: 400 });
+    if (bio.length > BIO_MAX_CHARS) {
+      return NextResponse.json(
+        { error: `Bio must be ${BIO_MAX_CHARS} characters max.` },
+        { status: 400 }
+      );
     }
     if (avatar.length > 0 && avatar.length > 2000000) {
       return NextResponse.json({ error: "Avatar is too large." }, { status: 400 });

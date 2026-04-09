@@ -72,7 +72,10 @@ export default async function HomePage() {
   return (
     <>
       {/* Intro hero */}
-      <section id="hero" className="relative left-1/2 mb-10 w-screen max-w-[100vw] -translate-x-1/2 scroll-mt-28">
+      <section
+        id="hero"
+        className="relative left-1/2 -mt-10 mb-10 w-screen max-w-[100vw] -translate-x-1/2 scroll-mt-28 md:-mt-12"
+      >
         <div className="hero-intro overflow-hidden">
           <NeuralOrbCanvas />
           <div className="relative z-10 mx-auto w-full max-w-6xl">
