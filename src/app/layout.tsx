@@ -13,14 +13,28 @@ const syne = Syne({
   weight: ["500", "600", "700", "800"],
 });
 
+function siteMetadataBase(): URL | undefined {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) {
+    const normalized = explicit.endsWith("/") ? explicit.slice(0, -1) : explicit;
+    return new URL(`${normalized}/`);
+  }
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) return new URL(`https://${vercel}`);
+  return undefined;
+}
+
+const metadataBase = siteMetadataBase();
+
 export const metadata: Metadata = {
+  ...(metadataBase ? { metadataBase } : {}),
   title: "NextUp — Vote for What Gets Built",
   description:
     "Pitch software ideas, vote on the best ones, and the community decides what gets built next.",
   icons: {
-    icon: [{ url: "/icon.svg?v=2", type: "image/svg+xml" }],
-    shortcut: ["/icon.svg?v=2"],
-    apple: ["/icon.svg?v=2"],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 

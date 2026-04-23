@@ -9,6 +9,7 @@ import StatusChanger from "@/components/StatusChanger";
 import IdeaInterestPanel from "@/components/IdeaInterestPanel";
 import Link from "next/link";
 import DeleteIdeaButton from "@/components/DeleteIdeaButton";
+import ProvisionRepoButton from "@/components/ProvisionRepoButton";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -41,6 +42,8 @@ export default async function IdeaDetailPage({ params }: Props) {
         userId: string;
         authorName: string;
         voteCount: number;
+        repoUrl: string | null;
+        repoName: string | null;
     };
 
     const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
@@ -75,8 +78,20 @@ export default async function IdeaDetailPage({ params }: Props) {
                         })}
                     </p>
                     {isAdmin && (
-                        <div className="mt-3">
+                        <div className="mt-3 space-y-2">
                             <StatusChanger ideaId={idea.id} currentStatus={idea.status} />
+                            {idea.repoUrl ? (
+                                <a
+                                    href={idea.repoUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex text-xs font-medium text-accent hover:underline"
+                                >
+                                    Open repo: {idea.repoName ?? "repository"} →
+                                </a>
+                            ) : (
+                                <ProvisionRepoButton ideaId={idea.id} />
+                            )}
                         </div>
                     )}
                 </div>

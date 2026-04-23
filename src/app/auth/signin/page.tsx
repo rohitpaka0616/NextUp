@@ -65,17 +65,7 @@ export default function SignInPage() {
           Sign in to vote, comment or submit.
         </p>
 
-        <button
-          type="button"
-          onClick={() => signIn("google", { callbackUrl })}
-          className="btn-secondary magnetic-btn mt-6 w-full !py-3 text-sm"
-        >
-          Continue with Google
-        </button>
-
-        <div className="my-5 text-center text-xs uppercase tracking-[0.14em] text-white/45">or</div>
-
-        <form onSubmit={handlePasswordSignIn} className="space-y-3">
+        <form onSubmit={handlePasswordSignIn} className="mt-6 space-y-3">
           <input
             type="email"
             required

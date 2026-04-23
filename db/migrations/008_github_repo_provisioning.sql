@@ -1,0 +1,8 @@
+ALTER TABLE public."Idea"
+ADD COLUMN IF NOT EXISTS "repoName" TEXT,
+ADD COLUMN IF NOT EXISTS "repoUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "repoCreatedAt" TIMESTAMP(3);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Idea_repoName_key"
+ON public."Idea" ("repoName")
+WHERE "repoName" IS NOT NULL;

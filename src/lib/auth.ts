@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import PostgresAdapter from "@auth/pg-adapter";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import Email from "next-auth/providers/email";
 import bcrypt from "bcryptjs";
 import { genId, pool } from "@/lib/db";
@@ -75,14 +74,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         signIn: "/auth/signin",
     },
     providers: [
-        ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-            ? [
-                  Google({
-                      clientId: process.env.GOOGLE_CLIENT_ID,
-                      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                  }),
-              ]
-            : []),
         ...(process.env.EMAIL_SERVER && process.env.EMAIL_FROM
             ? [
                   Email({

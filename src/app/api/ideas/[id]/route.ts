@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { trimIdeaFields, validateIdeaContent } from "@/lib/validation";
+import { createOrgRepoForIdea } from "@/lib/github";
+
+function isMissingColumnError(error: unknown) {
+    return (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "42703"
+    );
+}
 
 // GET /api/ideas/[id] — single idea detail
 export async function GET(
@@ -37,6 +47,34 @@ export async function GET(
 // PATCH /api/ideas/[id] — update idea status (author only)
 const VALID_STATUSES = ["OPEN", "BUILDING", "SHIPPED"] as const;
 
+async function provisionRepoIfNeeded(idea: {
+    id: string;
+    title: string;
+    shortDesc: string;
+    status: "OPEN" | "BUILDING" | "SHIPPED";
+    repoUrl: string | null;
+}) {
+    if (idea.repoUrl) return null;
+    if (idea.status !== "BUILDING" && idea.status !== "SHIPPED") return null;
+
+    const repo = await createOrgRepoForIdea({
+        ideaId: idea.id,
+        ideaTitle: idea.title,
+        ideaDescription: idea.shortDesc ?? "",
+    });
+    if (!repo) return null;
+
+    const { rows } = await pool.query(
+        `UPDATE "Idea"
+         SET "repoName" = $1, "repoUrl" = $2, "repoCreatedAt" = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [repo.name, repo.htmlUrl, idea.id]
+    );
+
+    return rows[0];
+}
+
 export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -62,10 +100,31 @@ export async function PATCH(
             return NextResponse.json({ error: "Only the admin can change the status" }, { status: 403 });
         }
 
-        const { rows: ideaRows } = await pool.query(
-            `SELECT id FROM "Idea" WHERE id = $1`,
-            [id]
-        );
+        let ideaRows: Array<{
+            id: string;
+            title: string;
+            shortDesc: string;
+            status: "OPEN" | "BUILDING" | "SHIPPED";
+            repoUrl: string | null;
+        }> = [];
+        try {
+            const result = await pool.query(
+                `SELECT id, title, "shortDesc", status, "repoUrl"
+                 FROM "Idea"
+                 WHERE id = $1`,
+                [id]
+            );
+            ideaRows = result.rows;
+        } catch (error) {
+            if (!isMissingColumnError(error)) throw error;
+            const fallback = await pool.query(
+                `SELECT id, title, "shortDesc", status, NULL::text AS "repoUrl"
+                 FROM "Idea"
+                 WHERE id = $1`,
+                [id]
+            );
+            ideaRows = fallback.rows;
+        }
 
         if (ideaRows.length === 0) {
             return NextResponse.json({ error: "Idea not found" }, { status: 404 });
@@ -76,10 +135,104 @@ export async function PATCH(
             [status, id]
         );
 
-        return NextResponse.json(rows[0]);
+        const updatedIdea = rows[0] as {
+            id: string;
+            title: string;
+            shortDesc: string;
+            status: "OPEN" | "BUILDING" | "SHIPPED";
+            repoUrl: string | null;
+        };
+
+        try {
+            const withRepo = await provisionRepoIfNeeded(updatedIdea);
+            return NextResponse.json(withRepo ?? updatedIdea);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Repo provisioning failed";
+            return NextResponse.json(
+                {
+                    ...updatedIdea,
+                    repoProvisionWarning: message,
+                },
+                { status: 200 }
+            );
+        }
     } catch {
         return NextResponse.json(
             { error: "Failed to update status" },
+            { status: 500 }
+        );
+    }
+}
+
+// POST /api/ideas/[id] — manually provision GitHub repository (admin only)
+export async function POST(
+    _req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        if (session.user.email !== process.env.ADMIN_EMAIL) {
+            return NextResponse.json({ error: "Only the admin can provision repos" }, { status: 403 });
+        }
+
+        const { id } = await params;
+        let rows: Array<{
+            id: string;
+            title: string;
+            shortDesc: string;
+            status: "OPEN" | "BUILDING" | "SHIPPED";
+            repoUrl: string | null;
+            repoName: string | null;
+        }> = [];
+        try {
+            const result = await pool.query(
+                `SELECT id, title, "shortDesc", status, "repoUrl", "repoName"
+                 FROM "Idea"
+                 WHERE id = $1`,
+                [id]
+            );
+            rows = result.rows;
+        } catch (error) {
+            if (!isMissingColumnError(error)) throw error;
+            const fallback = await pool.query(
+                `SELECT id, title, "shortDesc", status, NULL::text AS "repoUrl", NULL::text AS "repoName"
+                 FROM "Idea"
+                 WHERE id = $1`,
+                [id]
+            );
+            rows = fallback.rows;
+        }
+        if (rows.length === 0) {
+            return NextResponse.json({ error: "Idea not found" }, { status: 404 });
+        }
+
+        const idea = rows[0] as {
+            id: string;
+            title: string;
+            shortDesc: string;
+            status: "OPEN" | "BUILDING" | "SHIPPED";
+            repoUrl: string | null;
+            repoName: string | null;
+        };
+
+        if (idea.repoUrl) {
+            return NextResponse.json(idea);
+        }
+
+        const withRepo = await provisionRepoIfNeeded(idea);
+        if (!withRepo) {
+            return NextResponse.json(
+                { error: "Set idea status to BUILDING or SHIPPED before creating a repo." },
+                { status: 400 }
+            );
+        }
+        return NextResponse.json(withRepo);
+    } catch (error) {
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Failed to provision repository" },
             { status: 500 }
         );
     }

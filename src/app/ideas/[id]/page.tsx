@@ -7,6 +7,15 @@ import CommentsThreadClient from "@/components/CommentsThreadClient";
 import Link from "next/link";
 import ReportButton from "@/components/ReportButton";
 
+function isMissingColumnError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "42703"
+  );
+}
+
 function relTime(d: Date | string) {
   const iso = typeof d === "string" ? d : d.toISOString();
   const ms = Date.now() - new Date(iso).getTime();
@@ -18,28 +27,72 @@ function relTime(d: Date | string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+interface IdeaDetailsRow {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  createdAt: Date | string;
+  repoUrl: string | null;
+  repoName: string | null;
+  voteCount: number;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar: string | null;
+}
+
 export default async function IdeaDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
 
-  const { rows } = await pool.query(
-    `SELECT i.id,
-            i.title,
-            COALESCE(i.description, i."longDesc") AS description,
-            COALESCE(i.category, 'Other') AS category,
-            i."createdAt",
-            COUNT(v.id)::int AS "voteCount",
-            u.id AS "authorId",
-            u.name AS "authorName",
-            COALESCE(u.username, '') AS "authorUsername",
-            u.avatar AS "authorAvatar"
-     FROM "Idea" i
-     JOIN "User" u ON u.id = i."userId"
-     LEFT JOIN "Vote" v ON v."ideaId" = i.id
-     WHERE i.id = $1
-     GROUP BY i.id, u.id, u.name, u.username, u.avatar`,
-    [id]
-  );
+  let rows: IdeaDetailsRow[] = [];
+  try {
+    const result = await pool.query(
+      `SELECT i.id,
+              i.title,
+              COALESCE(i.description, i."longDesc") AS description,
+              COALESCE(i.category, 'Other') AS category,
+              i."createdAt",
+              i."repoUrl",
+              i."repoName",
+              COUNT(v.id)::int AS "voteCount",
+              u.id AS "authorId",
+              u.name AS "authorName",
+              COALESCE(u.username, '') AS "authorUsername",
+              u.avatar AS "authorAvatar"
+       FROM "Idea" i
+       JOIN "User" u ON u.id = i."userId"
+       LEFT JOIN "Vote" v ON v."ideaId" = i.id
+       WHERE i.id = $1
+       GROUP BY i.id, u.id, u.name, u.username, u.avatar`,
+      [id]
+    );
+    rows = result.rows as IdeaDetailsRow[];
+  } catch (error) {
+    if (!isMissingColumnError(error)) throw error;
+    const fallback = await pool.query(
+      `SELECT i.id,
+              i.title,
+              COALESCE(i.description, i."longDesc") AS description,
+              COALESCE(i.category, 'Other') AS category,
+              i."createdAt",
+              NULL::text AS "repoUrl",
+              NULL::text AS "repoName",
+              COUNT(v.id)::int AS "voteCount",
+              u.id AS "authorId",
+              u.name AS "authorName",
+              COALESCE(u.username, '') AS "authorUsername",
+              u.avatar AS "authorAvatar"
+       FROM "Idea" i
+       JOIN "User" u ON u.id = i."userId"
+       LEFT JOIN "Vote" v ON v."ideaId" = i.id
+       WHERE i.id = $1
+       GROUP BY i.id, u.id, u.name, u.username, u.avatar`,
+      [id]
+    );
+    rows = fallback.rows as IdeaDetailsRow[];
+  }
   if (rows.length === 0) notFound();
   const idea = rows[0];
 
@@ -87,6 +140,18 @@ export default async function IdeaDetailsPage({ params }: { params: Promise<{ id
         <div className="mt-5">
           <MarkdownContent content={idea.description} />
         </div>
+        {idea.repoUrl ? (
+          <div className="mt-4">
+            <a
+              href={idea.repoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-sm font-medium text-accent hover:underline"
+            >
+              View project repo{idea.repoName ? ` (${idea.repoName})` : ""} →
+            </a>
+          </div>
+        ) : null}
         <div className="mt-6">
           <VoteButton ideaId={idea.id} initialVoted={hasVoted} initialCount={idea.voteCount} />
         </div>
