@@ -16,6 +16,28 @@ services:
       timeout: 5s
       retries: 5
 
+  localmod:
+    build:
+      context: .
+      dockerfile: docker/localmod.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Higher thresholds = fewer false positives (NextUp also gates on confidence in app)
+      LOCALMOD_TOXICITY_THRESHOLD: "0.65"
+      LOCALMOD_PROMPT_INJECTION_THRESHOLD: "0.85"
+      LOCALMOD_SPAM_THRESHOLD: "0.85"
+      LOCALMOD_NSFW_THRESHOLD: "0.55"
+    volumes:
+      - localmod_cache:/home/localmod/.cache
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 5
+
   app:
     build: .
     restart: unless-stopped
@@ -27,9 +49,13 @@ services:
       AUTH_SECRET: "change-me-in-production-use-openssl-rand-base64-32"
       AUTH_URL: "http://localhost:3000"
       ADMIN_EMAIL: "admin@example.com"
+      LOCALMOD_URL: "http://localmod:8000"
     depends_on:
       db:
+        condition: service_healthy
+      localmod:
         condition: service_healthy
 
 volumes:
   pgdata:
+  localmod_cache:

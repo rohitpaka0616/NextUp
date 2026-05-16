@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, genId } from "@/lib/db";
 import { COMMUNITY_POST_MAX } from "@/lib/limits";
+import { moderateText } from "@/lib/localmod";
 
 function isUndefinedTable(error: unknown): boolean {
     return typeof error === "object" && error !== null && (error as { code?: string }).code === "42P01";
@@ -62,6 +63,11 @@ export async function POST(req: Request) {
                 { error: `Title/body too long` },
                 { status: 400 }
             );
+        }
+
+        const moderation = await moderateText(`${title}\n\n${body}`);
+        if (!moderation.ok) {
+            return NextResponse.json({ error: moderation.error }, { status: moderation.status });
         }
 
         const id = genId();

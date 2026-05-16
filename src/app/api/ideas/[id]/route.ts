@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { moderateIdeaFields } from "@/lib/localmod";
 import { trimIdeaFields, validateIdeaContent } from "@/lib/validation";
 import { createOrgRepoForIdea } from "@/lib/github";
 
@@ -262,6 +263,11 @@ export async function PUT(
         const invalid = validateIdeaContent(fields);
         if (invalid) {
             return NextResponse.json({ error: invalid }, { status: 400 });
+        }
+
+        const moderation = await moderateIdeaFields(fields);
+        if (!moderation.ok) {
+            return NextResponse.json({ error: moderation.error }, { status: moderation.status });
         }
 
         const { rows: ideaRows } = await pool.query(

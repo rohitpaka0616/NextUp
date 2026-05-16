@@ -6,6 +6,7 @@ import {
     AI_PROMPT_MAX,
     AI_PROMPT_MIN,
 } from "@/lib/limits";
+import { moderateText } from "@/lib/localmod";
 
 interface GeneratedIdea {
     title: string;
@@ -61,6 +62,14 @@ export async function POST(req: Request) {
             return NextResponse.json(
                 { error: `Prompt must be at most ${AI_PROMPT_MAX.toLocaleString()} characters.` },
                 { status: 400 }
+            );
+        }
+
+        const promptModeration = await moderateText(trimmed);
+        if (!promptModeration.ok) {
+            return NextResponse.json(
+                { error: promptModeration.error },
+                { status: promptModeration.status }
             );
         }
 
@@ -135,11 +144,23 @@ Requirements:
         }
 
         const longDesc = parsed.longDesc.trim().slice(0, AI_LONG_DESC_MAX);
-        return NextResponse.json({
+        const generated = {
             title: parsed.title.trim().slice(0, 120),
             shortDesc: parsed.shortDesc.trim().slice(0, 280),
             longDesc,
-        });
+        };
+
+        const outputModeration = await moderateText(
+            [generated.title, generated.shortDesc, generated.longDesc].join("\n\n")
+        );
+        if (!outputModeration.ok) {
+            return NextResponse.json(
+                { error: outputModeration.error },
+                { status: outputModeration.status }
+            );
+        }
+
+        return NextResponse.json(generated);
     } catch (error) {
         return NextResponse.json(
             {

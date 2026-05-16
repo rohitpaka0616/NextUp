@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, genId } from "@/lib/db";
+import { moderateIdeaFields } from "@/lib/localmod";
 import { trimIdeaFields, validateIdeaContent } from "@/lib/validation";
 
 // GET /api/ideas — list ideas ranked by vote count
@@ -81,6 +82,11 @@ export async function POST(req: Request) {
         const invalid = validateIdeaContent(fields);
         if (invalid) {
             return NextResponse.json({ error: invalid }, { status: 400 });
+        }
+
+        const moderation = await moderateIdeaFields(fields);
+        if (!moderation.ok) {
+            return NextResponse.json({ error: moderation.error }, { status: moderation.status });
         }
 
         const category =

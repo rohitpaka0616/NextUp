@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { genId, pool } from "@/lib/db";
+import { moderateText } from "@/lib/localmod";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -34,6 +35,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const parentCommentId = typeof payload.parentCommentId === "string" ? payload.parentCommentId : null;
     if (!body) return NextResponse.json({ error: "Comment body required" }, { status: 400 });
     if (body.length > 1000) return NextResponse.json({ error: "Comment too long" }, { status: 400 });
+
+    const moderation = await moderateText(body);
+    if (!moderation.ok) {
+      return NextResponse.json({ error: moderation.error }, { status: moderation.status });
+    }
 
     if (parentCommentId) {
       const { rows: parentRows } = await pool.query(
