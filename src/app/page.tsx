@@ -5,6 +5,7 @@ import StatusBadge from "@/components/StatusBadge";
 import DeleteIdeaButton from "@/components/DeleteIdeaButton";
 import SubmitIdeaForm from "@/components/SubmitIdeaForm";
 import IdeasBoardClient from "@/components/IdeasBoardClient";
+import SitePurposeSection from "@/components/SitePurposeSection";
 import ScrollTypewriter from "@/components/landing/ScrollTypewriter";
 import NeuralOrbCanvas from "@/components/landing/NeuralOrbCanvas";
 import type { Status } from "@/lib/db";
@@ -132,6 +133,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <SitePurposeSection />
 
       <IdeasBoardClient
         initialIdeas={ideas.map((idea: Record<string, unknown>) => ({

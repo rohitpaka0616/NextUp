@@ -21,8 +21,9 @@ export default async function Footer() {
                                 }}
                             />
                         </Link>
-                        <p className="max-w-[14rem] text-center text-xs text-muted sm:max-w-none sm:text-left sm:text-sm">
-                            Vote for what gets built next.
+                        <p className="max-w-xs text-center text-xs leading-relaxed text-muted sm:text-left sm:text-sm">
+                            A community product board: pitch software ideas, vote on priorities, and
+                            track what moves from concept to shipped.
                         </p>
                     </div>
 
@@ -30,6 +31,7 @@ export default async function Footer() {
                     <div className="flex gap-8 text-xs sm:gap-10 sm:text-sm">
                         <div className="flex flex-col gap-1.5 sm:gap-2">
                             <span className="font-semibold text-foreground">Product</span>
+                            <Link href="/#about" className="text-muted transition-colors hover:text-foreground">About</Link>
                             <Link href="/#spotlight" className="text-muted transition-colors hover:text-foreground">Spotlight</Link>
                             <Link href="/submit" className="text-muted transition-colors hover:text-foreground">Submit Idea</Link>
                             <Link href="/community" className="text-muted transition-colors hover:text-foreground">Community</Link>

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   ...(metadataBase ? { metadataBase } : {}),
   title: "NextUp — Vote for What Gets Built",
   description:
-    "Pitch software ideas, vote on the best ones, and the community decides what gets built next.",
+    "NextUp is a community-driven product board: pitch software ideas, vote on what matters, discuss in the open, and follow ideas from concept to shipped.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
