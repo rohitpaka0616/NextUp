@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import PostgresAdapter from "@auth/pg-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Email from "next-auth/providers/email";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { genId, pool } from "@/lib/db";
 import { normalizeEmail } from "@/lib/validation";
@@ -74,6 +75,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         signIn: "/auth/signin",
     },
     providers: [
+        ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+            ? [
+                  Google({
+                      allowDangerousEmailAccountLinking: true,
+                  }),
+              ]
+            : []),
         ...(process.env.EMAIL_SERVER && process.env.EMAIL_FROM
             ? [
                   Email({

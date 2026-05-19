@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
+import AuthDivider from "@/components/AuthDivider";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { normalizeEmail } from "@/lib/validation";
 
 export default function SignInPage() {
@@ -15,6 +17,14 @@ export default function SignInPage() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/providers")
+      .then((res) => res.json())
+      .then((providers) => setGoogleEnabled(Boolean(providers?.google)))
+      .catch(() => setGoogleEnabled(false));
+  }, []);
 
   async function handlePasswordSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +75,16 @@ export default function SignInPage() {
           Sign in to vote, comment or submit.
         </p>
 
-        <form onSubmit={handlePasswordSignIn} className="mt-6 space-y-3">
+        {googleEnabled ? (
+          <>
+            <div className="mt-6">
+              <GoogleSignInButton callbackUrl={callbackUrl} disabled={loading} />
+            </div>
+            <AuthDivider />
+          </>
+        ) : null}
+
+        <form onSubmit={handlePasswordSignIn} className={googleEnabled ? "space-y-3" : "mt-6 space-y-3"}>
           <input
             type="email"
             required

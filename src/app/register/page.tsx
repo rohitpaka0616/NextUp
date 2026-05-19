@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AuthDivider from "@/components/AuthDivider";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import {
     isValidDisplayName,
     isValidEmail,
@@ -15,6 +17,14 @@ export default function RegisterPage() {
     const [form, setForm] = useState({ name: "", email: "", password: "" });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [googleEnabled, setGoogleEnabled] = useState(false);
+
+    useEffect(() => {
+        fetch("/api/auth/providers")
+            .then((res) => res.json())
+            .then((providers) => setGoogleEnabled(Boolean(providers?.google)))
+            .catch(() => setGoogleEnabled(false));
+    }, []);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -74,6 +84,17 @@ export default function RegisterPage() {
             <p className="mb-8 text-center text-muted">
                 Join the community and start voting
             </p>
+
+            {googleEnabled ? (
+                <>
+                    <GoogleSignInButton
+                        callbackUrl="/"
+                        label="Sign up with Google"
+                        disabled={loading}
+                    />
+                    <AuthDivider label="or register with email" />
+                </>
+            ) : null}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 {error && (
