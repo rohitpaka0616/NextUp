@@ -1,4 +1,4 @@
-import { matchesExplicitContentPolicy } from "@/lib/content-policy";
+import { violatesContentPolicy } from "@/lib/content-policy";
 import type { IdeaFieldPayload } from "@/lib/validation";
 
 /** toxicity + nsfw: blocks abuse and adult products without prompt_injection spam FPs. */
@@ -8,7 +8,7 @@ const BLOCK_SEVERITIES = new Set(["high", "critical"]);
 
 /** Per-classifier minimum confidence before we block (LocalMod may flag lower). */
 const CLASSIFIER_BLOCK_CONFIDENCE: Record<string, number> = {
-    toxicity: 0.75,
+    toxicity: 0.65,
     nsfw: 0.55,
     spam: 0.85,
     prompt_injection: 0.88,
@@ -87,9 +87,9 @@ function shouldBlockResult(
 
     if (BLOCK_SEVERITIES.has(severity)) return true;
 
-    // NSFW: also block medium+ when LocalMod flagged it
+    // Toxicity / NSFW: block medium+ when the model flagged it
     if (
-        result.classifier === "nsfw" &&
+        (result.classifier === "toxicity" || result.classifier === "nsfw") &&
         (severity === "medium" || severity === "high" || severity === "critical")
     ) {
         return true;
@@ -133,9 +133,9 @@ function formatFlagDetails(
 }
 
 function checkContentPolicy(text: string): ModerationOutcome | null {
-    if (!matchesExplicitContentPolicy(text)) return null;
+    if (!violatesContentPolicy(text)) return null;
     const details =
-        process.env.NODE_ENV === "development" ? "explicit content policy" : undefined;
+        process.env.NODE_ENV === "development" ? "content policy" : undefined;
     return {
         ok: false,
         error: userFacingBlockMessage(details),
