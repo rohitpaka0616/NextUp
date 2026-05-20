@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { AI_PROMPT_MAX } from "@/lib/limits";
+import { AI_PROMPT_MAX, AI_PROMPT_MIN } from "@/lib/limits";
 
 interface SubmitIdeaFormProps {
     compact?: boolean;
@@ -76,16 +76,21 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
     }
 
     async function handleGenerateWithAi() {
+        const trimmedPrompt = ideaPrompt.trim();
+        if (trimmedPrompt.length < AI_PROMPT_MIN) {
+            setError(
+                `Describe what you want the AI to generate (at least ${AI_PROMPT_MIN} characters).`
+            );
+            return;
+        }
+
         setError("");
         setGenerating(true);
         try {
-            const promptToUse =
-                ideaPrompt.trim() ||
-                "Generate a high-impact software startup idea for developers and small teams.";
             const res = await fetch("/api/ideas/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: promptToUse }),
+                body: JSON.stringify({ prompt: trimmedPrompt }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -104,6 +109,8 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
         }
     }
 
+    const promptTooShort = ideaPrompt.trim().length < AI_PROMPT_MIN;
+
     return (
         <form onSubmit={handleSubmit} className="card-elevated flex flex-col gap-6 p-6">
             {error && (
@@ -120,8 +127,13 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
                     <button
                         type="button"
                         onClick={handleGenerateWithAi}
-                        disabled={generating}
+                        disabled={generating || promptTooShort}
                         className="btn-secondary !px-3 !py-2 text-xs disabled:opacity-50"
+                        title={
+                            promptTooShort
+                                ? `Enter at least ${AI_PROMPT_MIN} characters to generate`
+                                : undefined
+                        }
                     >
                         {generating ? "Generating..." : "Generate"}
                     </button>
@@ -136,7 +148,8 @@ export default function SubmitIdeaForm({ compact = false }: SubmitIdeaFormProps)
                     className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm leading-relaxed placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20"
                 />
                 <p className="mt-2 text-xs text-muted">
-                    AI fills title and description. ({ideaPrompt.length}/{AI_PROMPT_MAX} characters)
+                    Describe your idea first — AI fills title and description. (
+                    {ideaPrompt.trim().length}/{AI_PROMPT_MAX}, min {AI_PROMPT_MIN})
                 </p>
             </div>
 

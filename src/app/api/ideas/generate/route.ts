@@ -43,8 +43,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { prompt } = await req.json();
-        if (!prompt || typeof prompt !== "string") {
+        const body = await req.json();
+        const prompt = body?.prompt;
+        if (typeof prompt !== "string") {
             return NextResponse.json(
                 { error: "Please provide an idea prompt." },
                 { status: 400 }
@@ -54,7 +55,9 @@ export async function POST(req: Request) {
         const trimmed = prompt.trim();
         if (trimmed.length < AI_PROMPT_MIN) {
             return NextResponse.json(
-                { error: `Prompt must be at least ${AI_PROMPT_MIN} characters.` },
+                {
+                    error: `Describe what you want generated (at least ${AI_PROMPT_MIN} characters).`,
+                },
                 { status: 400 }
             );
         }
