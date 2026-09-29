@@ -10,6 +10,14 @@
   Pitch → Vote → Build → Ship
 </p>
 
+<p align="center">
+  <a href="https://next-up-gamma.vercel.app">Live site</a>
+  ·
+  <a href=".env.example">Env example</a>
+  ·
+  <a href="docs/brand/">Brand assets</a>
+</p>
+
 ---
 
 ## What is NextUp?
