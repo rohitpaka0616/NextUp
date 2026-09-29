@@ -26,11 +26,34 @@ function siteMetadataBase(): URL | undefined {
 
 const metadataBase = siteMetadataBase();
 
+const siteTitle = "NextUp — Vote for What Gets Built";
+const siteDescription =
+  "NextUp is a community-driven product board: pitch software ideas, vote on what matters, discuss in the open, and follow ideas from concept to shipped.";
+
 export const metadata: Metadata = {
   ...(metadataBase ? { metadataBase } : {}),
-  title: "NextUp — Vote for What Gets Built",
-  description:
-    "NextUp is a community-driven product board: pitch software ideas, vote on what matters, discuss in the open, and follow ideas from concept to shipped.",
+  title: siteTitle,
+  description: siteDescription,
+  applicationName: "NextUp",
+  keywords: [
+    "NextUp",
+    "product board",
+    "idea voting",
+    "community roadmap",
+    "build in public",
+  ],
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    siteName: "NextUp",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
